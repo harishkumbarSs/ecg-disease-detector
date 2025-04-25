@@ -1,11 +1,17 @@
-setuptools
-numpy==1.23.5
-scikit-learn>=1.2.0
+# Ensure setuptools provides distutils
+setuptools>=65.0.0
 
-scikit-image
-unzip
-joblib
-pandas
-matplotlib
-natsort
-streamlit
+# Core numeric & ML libraries
+numpy>=1.24.2
+scikit-learn>=1.2.2
+
+# Image processing, plotting, and data utilities
+scikit-image>=0.20.0
+pandas>=1.5.0
+matplotlib>=3.7.0
+natsort>=8.4.0
+joblib>=1.2.0
+pillow>=9.0.0
+
+# Streamlit web app framework
+streamlit>=1.25.0
