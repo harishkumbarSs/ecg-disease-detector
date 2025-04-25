@@ -1,7 +1,6 @@
 numpy==1.23.5
 scikit-learn==1.1.3
 scikit-image
-unzip
 joblib
 pandas
 matplotlib
