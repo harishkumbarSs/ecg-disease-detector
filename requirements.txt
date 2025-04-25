@@ -1,17 +1,21 @@
-# Ensure setuptools provides distutils
+# Ensure distutils support via a modern setuptools
 setuptools>=65.0.0
 
-# Core numeric & ML libraries
+# Pre-built NumPy wheel for Python 3.12+
 numpy>=1.24.2
-scikit-learn>=1.2.2
 
-# Image processing, plotting, and data utilities
+# Match scikit-learn to your pickled model's version
+scikit-learn==1.2.2
+
+# Image processing & plotting
+pillow>=9.0.0
 scikit-image>=0.20.0
-pandas>=1.5.0
 matplotlib>=3.7.0
+
+# Data handling
+pandas>=1.5.0
 natsort>=8.4.0
 joblib>=1.2.0
-pillow>=9.0.0
 
-# Streamlit web app framework
+# Streamlit
 streamlit>=1.25.0
