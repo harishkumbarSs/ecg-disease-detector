@@ -1,77 +1,92 @@
+# final_app.py
+
 import streamlit as st
-#from PIL import Image  # Import Image from Pillow
+import numpy as np
 from Ecg import ECG
 
-# Initialize ECG object
-ecg = ECG()
+# 1) Page config + hide menu/footer
+st.set_page_config(
+    page_title="ECG Disease Detector",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+st.markdown("""
+    <style>
+      #MainMenu {visibility: hidden;}
+      footer {visibility: hidden;}
+      header {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
 
-# Get the uploaded image
-uploaded_file = st.file_uploader("Choose a file", type=["jpg", "jpeg", "png"])
+# 2) Sidebar
+st.sidebar.title("ECG Disease Detector")
+st.sidebar.write("Built with ❤️ and Streamlit")
+uploaded = st.sidebar.file_uploader("Upload ECG Image", type=["png","jpg","jpeg"])
+st.sidebar.markdown("---")
+run_button = st.sidebar.button("Run Analysis")
 
-if uploaded_file is not None:
-    """#### **UPLOADED IMAGE**"""
-    # Read the image using Pillow
-    #pil_image = Image.open(uploaded_file)
+# 3) Main
+if uploaded and run_button:
+    ecg = ECG()
+    with st.spinner("Processing..."):
+        # Load & preprocess
+        img = ecg.getImage(uploaded)
+        gray = ecg.GrayImage(img)
+        leads = ecg.DividingLeads(img)
+        ecg.PreprocessingLeads(leads)
+        ecg.SignalExtraction_Scaling(leads)
+        df_signal = ecg.CombineConvert1Dsignal()
+        df_reduced = ecg.DimensionalReduciton(df_signal)
+        prediction = ecg.ModelLoad_predict(df_reduced)
 
-    # Call the getImage method
-    #ecg_user_image_read = ecg.getImage(pil_image)
-    ecg_user_image_read = ecg.getImage(uploaded_file)
-    # Show the image
-    st.image(ecg_user_image_read)
+    # 4) Tabs for each step
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "1️⃣ Upload & Preview",
+        "2️⃣ Preprocessing",
+        "3️⃣ Feature Extraction",
+        "4️⃣ Prediction"
+    ])
 
-    """#### **GRAY SCALE IMAGE**"""
-    # Call the convert Grayscale image method
-    ecg_user_gray_image_read = ecg.GrayImgae(ecg_user_image_read)
+    with tab1:
+        st.header("1. Upload & Preview")
+        col1, col2 = st.columns(2)
+        col1.subheader("Original ECG")
+        col1.image(img, use_container_width=True)
+        col2.subheader("Grayscale ECG")
+        col2.image(gray, use_container_width=True)
 
-    # Create Streamlit Expander for Gray Scale
-    my_expander = st.expander(label='Gray SCALE IMAGE')
-    with my_expander:
-        st.image(ecg_user_gray_image_read)
+    with tab2:
+        st.header("2. Lead Segmentation & Preprocessing")
+        st.subheader("Divided Leads (1–12)")
+        st.image("Leads_1-12_figure.png", use_container_width=True)
+        st.subheader("Long Lead (13)")
+        st.image("Long_Lead_13_figure.png", use_container_width=True)
+        st.markdown("----")
+        st.subheader("Preprocessed Leads")
+        st.image("Preprocessed_Leads_1-12_figure.png", use_container_width=True)
+        st.image("Preprocessed_Leads_13_figure.png", use_container_width=True)
 
-    """#### **DIVIDING LEADS**"""
-    # Call the Divide leads method
-    dividing_leads = ecg.DividingLeads(ecg_user_image_read)
+    with tab3:
+        st.header("3. Signal Extraction & 1D Conversion")
+        st.subheader("Extracted Signals")
+        st.image("Contour_Leads_1-12_figure.png", use_container_width=True)
+        st.markdown("----")
+        st.subheader("1D Signal DataFrame")
+        st.dataframe(df_signal, use_container_width=True)
 
-    # Streamlit expander for dividing leads
-    my_expander1 = st.expander(label='DIVIDING LEAD')
-    with my_expander1:
-        st.image('Leads_1-12_figure.png')
-        st.image('Long_Lead_13_figure.png')
+        st.markdown("----")
+        st.subheader("Dimensional Reduction (PCA Output)")
+        st.dataframe(df_reduced, use_container_width=True)
 
-    """#### **PREPROCESSED LEADS**"""
-    # Call the preprocessed leads method
-    ecg_preprocessed_leads = ecg.PreprocessingLeads(dividing_leads)
+    with tab4:
+        st.header("4. Prediction")
+        st.metric(label="Detected Condition", value=prediction)
 
-    # Streamlit expander for preprocessed leads
-    my_expander2 = st.expander(label='PREPROCESSED LEAD')
-    with my_expander2:
-        st.image('Preprossed_Leads_1-12_figure.png')
-        st.image('Preprossed_Leads_13_figure.png')
-
-    """#### **EXTRACTING SIGNALS(1-12)**"""
-    # Call the signal extraction method
-    ec_signal_extraction = ecg.SignalExtraction_Scaling(dividing_leads)
-    my_expander3 = st.expander(label='CONOTUR LEADS')
-    with my_expander3:
-        st.image('Contour_Leads_1-12_figure.png')
-
-    """#### **CONVERTING TO 1D SIGNAL**"""
-    # Call the combine and convert to 1D signal method
-    ecg_1dsignal = ecg.CombineConvert1Dsignal()
-    my_expander4 = st.expander(label='1D Signals')
-    with my_expander4:
-        st.write(ecg_1dsignal)
-
-    """#### **PERFORM DIMENSIONALITY REDUCTION**"""
-    # Call the dimensionality reduction function
-    ecg_final = ecg.DimensionalReduciton(ecg_1dsignal)
-    my_expander4 = st.expander(label='Dimensional Reduction')
-    with my_expander4:
-        st.write(ecg_final)
-
-    """#### **PASS TO PRETRAINED ML MODEL FOR PREDICTION**"""
-    # Call the pretrained ML model for prediction
-    ecg_model = ecg.ModelLoad_predict(ecg_final)
-    my_expander5 = st.expander(label='PREDICTION')
-    with my_expander5:
-        st.write(ecg_model)
+else:
+    st.markdown(
+        "<div style='text-align:center; padding-top:50px;'>"
+        "<h2>Welcome!</h2>"
+        "<p>Please upload an ECG image<br>and click ‘Run Analysis’</p>"
+        "</div>",
+        unsafe_allow_html=True
+    )
